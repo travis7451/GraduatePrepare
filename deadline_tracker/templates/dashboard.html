@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Deadline Tracker{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Dashboard</h1>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-calendar-alt fa-2x text-primary mb-2"></i>
+                <h5 class="card-title">Total Deadlines</h5>
+                <h2 class="text-primary">{{ total_deadlines }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                <h5 class="card-title">Pending</h5>
+                <h2 class="text-warning">{{ pending_deadlines }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
+                <h5 class="card-title">Overdue</h5>
+                <h2 class="text-danger">{{ overdue_deadlines }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-fire fa-2x text-warning mb-2"></i>
+                <h5 class="card-title">Urgent (Next 7 Days)</h5>
+                <h2 class="text-warning">{{ urgent_deadlines|length }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if urgent_deadlines %}
+<div class="card">
+    <div class="card-header">
+        <h4><i class="fas fa-exclamation-circle text-warning"></i> Urgent Deadlines (Next 7 Days)</h4>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>University</th>
+                        <th>Program</th>
+                        <th>Deadline</th>
+                        <th>Days Left</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for deadline in urgent_deadlines %}
+                    <tr>
+                        <td>{{ deadline.title }}</td>
+                        <td>{{ deadline.university }}</td>
+                        <td>{{ deadline.program }}</td>
+                        <td>{{ deadline.deadline_date.strftime('%B %d, %Y') }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if deadline.days_until_deadline() <= 1 %}bg-danger
+                                {% elif deadline.days_until_deadline() <= 3 %}bg-warning
+                                {% else %}bg-info
+                                {% endif %}">
+                                {{ deadline.days_until_deadline() }} days
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge 
+                                {% if deadline.priority == 'high' %}bg-danger
+                                {% elif deadline.priority == 'medium' %}bg-warning
+                                {% else %}bg-secondary
+                                {% endif %}">
+                                {{ deadline.priority.title() }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge 
+                                {% if deadline.status == 'completed' %}bg-success
+                                {% elif deadline.status == 'in_progress' %}bg-info
+                                {% else %}bg-secondary
+                                {% endif %}">
+                                {{ deadline.status.replace('_', ' ').title() }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('edit_deadline', id=deadline.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{{ url_for('delete_deadline', id=deadline.id) }}" 
+                                   class="btn btn-sm btn-outline-danger"
+                                   onclick="return confirm('Are you sure?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-success">
+    <i class="fas fa-check-circle"></i> No urgent deadlines in the next 7 days. Great job!
+</div>
+{% endif %}
+
+<div class="text-center mt-4">
+    <a href="{{ url_for('index') }}" class="btn btn-primary">
+        <i class="fas fa-list"></i> View All Deadlines
+    </a>
+    <a href="{{ url_for('add_deadline') }}" class="btn btn-success">
+        <i class="fas fa-plus"></i> Add New Deadline
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Deadline Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Graduate School Deadlines</h1>
+    <a href="{{ url_for('add_deadline') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add Deadline
+    </a>
+</div>
+
+{% if deadlines %}
+    <div class="row">
+        {% for deadline in deadlines %}
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100 
+                    {% if deadline.is_overdue() %}border-danger
+                    {% elif deadline.is_urgent() %}border-warning
+                    {% else %}border-success
+                    {% endif %}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">{{ deadline.university }}</h6>
+                        <span class="badge 
+                            {% if deadline.priority == 'high' %}bg-danger
+                            {% elif deadline.priority == 'medium' %}bg-warning
+                            {% else %}bg-secondary
+                            {% endif %}">
+                            {{ deadline.priority.title() }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ deadline.title }}</h5>
+                        <p class="card-text"><strong>Program:</strong> {{ deadline.program }}</p>
+                        <p class="card-text"><strong>Category:</strong> {{ deadline.category.title() }}</p>
+                        <p class="card-text">
+                            <strong>Deadline:</strong> {{ deadline.deadline_date.strftime('%B %d, %Y') }}
+                        </p>
+                        <p class="card-text">
+                            <strong>Days Left:</strong> 
+                            <span class="
+                                {% if deadline.is_overdue() %}text-danger
+                                {% elif deadline.is_urgent() %}text-warning
+                                {% else %}text-success
+                                {% endif %}">
+                                {% if deadline.is_overdue() %}
+                                    {{ deadline.days_until_deadline() * -1 }} days overdue
+                                {% else %}
+                                    {{ deadline.days_until_deadline() }} days
+                                {% endif %}
+                            </span>
+                        </p>
+                        <p class="card-text">
+                            <strong>Status:</strong> 
+                            <span class="badge 
+                                {% if deadline.status == 'completed' %}bg-success
+                                {% elif deadline.status == 'in_progress' %}bg-info
+                                {% else %}bg-secondary
+                                {% endif %}">
+                                {{ deadline.status.replace('_', ' ').title() }}
+                            </span>
+                        </p>
+                        {% if deadline.notes %}
+                            <p class="card-text"><small class="text-muted">{{ deadline.notes }}</small></p>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <div class="btn-group w-100">
+                            <a href="{{ url_for('edit_deadline', id=deadline.id) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="{{ url_for('delete_deadline', id=deadline.id) }}" 
+                               class="btn btn-outline-danger btn-sm"
+                               onclick="return confirm('Are you sure you want to delete this deadline?')">
+                                <i class="fas fa-trash"></i> Delete
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+        <h3>No deadlines yet</h3>
+        <p class="text-muted">Start by adding your first deadline to track your graduate school applications.</p>
+        <a href="{{ url_for('add_deadline') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add Your First Deadline
+        </a>
+    </div>
+{% endif %}
+{% endblock %}

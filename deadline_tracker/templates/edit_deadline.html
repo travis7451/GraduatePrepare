@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Deadline - Deadline Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-edit"></i> Edit Deadline</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="title" name="title" 
+                               value="{{ deadline.title }}" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="university" class="form-label">University</label>
+                                <input type="text" class="form-control" id="university" name="university" 
+                                       value="{{ deadline.university }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="program" class="form-label">Program</label>
+                                <input type="text" class="form-control" id="program" name="program" 
+                                       value="{{ deadline.program }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="deadline_date" class="form-label">Deadline Date</label>
+                        <input type="date" class="form-control" id="deadline_date" name="deadline_date" 
+                               value="{{ deadline.deadline_date.strftime('%Y-%m-%d') }}" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Category</label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="application" {% if deadline.category == 'application' %}selected{% endif %}>Application</option>
+                                    <option value="test" {% if deadline.category == 'test' %}selected{% endif %}>Test (TOEFL/GRE)</option>
+                                    <option value="document" {% if deadline.category == 'document' %}selected{% endif %}>Document</option>
+                                    <option value="recommendation" {% if deadline.category == 'recommendation' %}selected{% endif %}>Recommendation Letter</option>
+                                    <option value="financial" {% if deadline.category == 'financial' %}selected{% endif %}>Financial Aid</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="priority" class="form-label">Priority</label>
+                                <select class="form-select" id="priority" name="priority" required>
+                                    <option value="high" {% if deadline.priority == 'high' %}selected{% endif %}>High</option>
+                                    <option value="medium" {% if deadline.priority == 'medium' %}selected{% endif %}>Medium</option>
+                                    <option value="low" {% if deadline.priority == 'low' %}selected{% endif %}>Low</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Status</label>
+                                <select class="form-select" id="status" name="status" required>
+                                    <option value="pending" {% if deadline.status == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="in_progress" {% if deadline.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="completed" {% if deadline.status == 'completed' %}selected{% endif %}>Completed</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3">{{ deadline.notes or '' }}</textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Deadline
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
