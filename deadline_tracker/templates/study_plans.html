@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Study Plans - Deadline Tracker{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-book"></i> Test Preparation Study Plans
+        </h1>
+        <p class="lead">Choose a test to view detailed study plans and track your preparation progress.</p>
+    </div>
+</div>
+
+<div class="row">
+    {% for test_type in test_types %}
+        {% set plan = plans[test_type] %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-graduation-cap"></i> {{ test_type }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ plan.title }}</h5>
+                    <p class="card-text">{{ plan.description }}</p>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Target Score:</strong><br>
+                            <span class="badge bg-success">{{ plan.target_score }}+</span>
+                        </div>
+                        <div class="col-6">
+                            <strong>Duration:</strong><br>
+                            <span class="badge bg-info">{{ plan.duration_weeks }} weeks</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <strong>Daily Study Time:</strong><br>
+                            <span class="badge bg-warning">{{ plan.study_hours_per_day }} hours/day</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Study Phases:</strong>
+                        <ul class="list-unstyled mt-2">
+                            {% for phase in plan.phases %}
+                                <li class="mb-1">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    {{ phase.phase }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Key Resources:</strong>
+                        <ul class="list-unstyled mt-2">
+                            {% for resource in plan.resources[:3] %}
+                                <li class="mb-1">
+                                    <i class="fas fa-book text-info"></i>
+                                    {{ resource }}
+                                </li>
+                            {% endfor %}
+                            {% if plan.resources|length > 3 %}
+                                <li class="text-muted">...and {{ plan.resources|length - 3 }} more</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('study_plan_detail', test_type=test_type.lower()) }}" 
+                       class="btn btn-primary btn-block w-100">
+                        <i class="fas fa-eye"></i> View Detailed Plan
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h5><i class="fas fa-lightbulb"></i> Study Tips</h5>
+            <ul class="mb-0">
+                <li><strong>Consistency is key:</strong> Study daily rather than cramming</li>
+                <li><strong>Track progress:</strong> Take practice tests regularly to monitor improvement</li>
+                <li><strong>Focus on weak areas:</strong> Spend extra time on sections where you score lowest</li>
+                <li><strong>Create a schedule:</strong> Integrate study time with your deadline tracker</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="text-center mt-4">
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Deadlines
+    </a>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-info">
+        <i class="fas fa-chart-bar"></i> View Dashboard
+    </a>
+</div>
+{% endblock %}

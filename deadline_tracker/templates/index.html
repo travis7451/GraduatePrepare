@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}UC Graduate School Journey - Deadline Tracker{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="jumbotron bg-primary text-white p-5 rounded">
+            <div class="container">
+                <h1 class="display-4">🎓 UC Graduate School Journey</h1>
+                <p class="lead">Your comprehensive preparation tracker for UC System graduate programs in CS/EE</p>
+                <p class="mb-0">
+                    <strong>Goal:</strong> Fall 2027 Admission to UC Graduate School
+                    <br>
+                    <strong>Target Programs:</strong> Computer Science / Electrical Engineering
+                    <br>
+                    <strong>Target Schools:</strong> UC Berkeley, UCLA, UC San Diego, UC Santa Barbara
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Overview -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h2><i class="fas fa-chart-line"></i> Progress Overview</h2>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center bg-light">
+            <div class="card-body">
+                <i class="fas fa-book-open fa-2x text-primary mb-2"></i>
+                <h5 class="card-title">Today's Study</h5>
+                <h2 class="text-primary">{{ today_hours }}h</h2>
+                <small class="text-muted">Hours studied today</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-light">
+            <div class="card-body">
+                <i class="fas fa-calendar-week fa-2x text-success mb-2"></i>
+                <h5 class="card-title">This Week</h5>
+                <h2 class="text-success">{{ week_hours }}h</h2>
+                <small class="text-muted">Hours this week</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-light">
+            <div class="card-body">
+                <i class="fas fa-clock fa-2x text-info mb-2"></i>
+                <h5 class="card-title">Total Study</h5>
+                <h2 class="text-info">{{ total_study_hours }}h</h2>
+                <small class="text-muted">Total hours logged</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-light">
+            <div class="card-body">
+                <i class="fas fa-tasks fa-2x text-warning mb-2"></i>
+                <h5 class="card-title">Urgent Tasks</h5>
+                <h2 class="text-warning">{{ urgent_deadlines|length }}</h2>
+                <small class="text-muted">Next 7 days</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Major Milestones -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-flag-checkered"></i> Major Milestones to UC Graduate School</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for milestone in milestones %}
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100 {% if milestone.urgent %}border-warning{% else %}border-primary{% endif %}">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">{{ milestone.name }}</h6>
+                                <p class="card-text">
+                                    <strong>{{ milestone.date.strftime('%B %d, %Y') }}</strong>
+                                </p>
+                                <span class="badge {% if milestone.urgent %}bg-warning{% else %}bg-primary{% endif %} fs-6">
+                                    {{ milestone.days_until }} days
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Urgent Deadlines -->
+{% if urgent_deadlines %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4><i class="fas fa-exclamation-triangle"></i> Urgent Deadlines (Next 7 Days)</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for deadline in urgent_deadlines %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-warning">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ deadline.title }}</h6>
+                                <p class="card-text">
+                                    <strong>{{ deadline.university }}</strong> - {{ deadline.program }}
+                                </p>
+                                <p class="card-text">
+                                    <i class="fas fa-calendar"></i> {{ deadline.deadline_date.strftime('%B %d, %Y') }}
+                                    <br>
+                                    <span class="badge bg-danger">{{ deadline.days_until_deadline() }} days left</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Upcoming Deadlines -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-calendar-alt"></i> Upcoming Deadlines (Next 30 Days)</h5>
+            </div>
+            <div class="card-body">
+                {% if upcoming_deadlines %}
+                <div class="timeline">
+                    {% for deadline in upcoming_deadlines %}
+                    <div class="timeline-item mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="ms-3 flex-grow-1">
+                                <h6 class="mb-1">{{ deadline.title }}</h6>
+                                <p class="mb-1">{{ deadline.university }} - {{ deadline.program }}</p>
+                                <small class="text-muted">
+                                    {{ deadline.deadline_date.strftime('%B %d, %Y') }} 
+                                    ({{ deadline.days_until_deadline() }} days)
+                                </small>
+                            </div>
+                            <div>
+                                <span class="badge 
+                                    {% if deadline.priority == 'high' %}bg-danger
+                                    {% elif deadline.priority == 'medium' %}bg-warning
+                                    {% else %}bg-secondary
+                                    {% endif %}">
+                                    {{ deadline.priority.title() }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No upcoming deadlines in the next 30 days. Great job staying ahead!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-book"></i> Recent Study Sessions</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_sessions %}
+                <div class="list-group list-group-flush">
+                    {% for session in recent_sessions %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-1">{{ session.task_name }}</h6>
+                                <small class="text-muted">{{ session.subject }} - {{ session.test_type }}</small>
+                            </div>
+                            <small class="text-muted">{{ session.duration_hours() }}h</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No study sessions logged yet. Start tracking your progress!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body text-center">
+                <a href="{{ url_for('add_study_session') }}" class="btn btn-success btn-lg me-3">
+                    <i class="fas fa-play"></i> Log Study Session
+                </a>
+                <a href="{{ url_for('study_plans') }}" class="btn btn-primary btn-lg me-3">
+                    <i class="fas fa-book"></i> View Study Plans
+                </a>
+                <a href="{{ url_for('add_deadline') }}" class="btn btn-warning btn-lg me-3">
+                    <i class="fas fa-plus"></i> Add Deadline
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-info btn-lg">
+                    <i class="fas fa-chart-bar"></i> View Analytics
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- UC System Information -->
+<div class="row">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-header">
+                <h5><i class="fas fa-university"></i> UC System Target Schools</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6>UC Berkeley</h6>
+                            <p class="text-muted">EECS / CS</p>
+                            <small>Rank: #1 Public</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6>UCLA</h6>
+                            <p class="text-muted">CS / EE</p>
+                            <small>Rank: #2 Public</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6>UC San Diego</h6>
+                            <p class="text-muted">CSE / ECE</p>
+                            <small>Rank: #7 Public</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6>UC Santa Barbara</h6>
+                            <p class="text-muted">CS / EE</p>
+                            <small>Rank: #5 Public</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline-marker {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.jumbotron {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.timeline-item {
+    position: relative;
+}
+
+.timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 24px;
+    bottom: -16px;
+    width: 2px;
+    background-color: #e9ecef;
+}
+</style>
+{% endblock %}
