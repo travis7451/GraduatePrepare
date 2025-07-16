@@ -79,6 +79,19 @@
                                 <div class="mt-2">
                                     <span class="badge bg-outline-primary">{{ task.time_required }}</span>
                                 </div>
+                                <div class="mt-2">
+                                    <button class="btn btn-success btn-sm me-2" onclick="showQuickLogModal('{{ task.task }}', '{{ task.time_required }}')">
+                                        <i class="fas fa-play"></i> Quick Log
+                                    </button>
+                                    <form method="POST" action="{{ url_for('mark_task_complete') }}" style="display: inline;">
+                                        <input type="hidden" name="test_type" value="{{ test_type }}">
+                                        <input type="hidden" name="phase_number" value="{{ loop.index0 }}">
+                                        <input type="hidden" name="task_index" value="{{ loop.index0 }}">
+                                        <button type="submit" class="btn btn-outline-success btn-sm">
+                                            <i class="fas fa-check"></i> Complete
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -176,4 +189,79 @@
         </div>
     </div>
 </div>
+
+<!-- Quick Log Modal -->
+<div class="modal fade" id="quickLogModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Quick Log Study Session</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quickLogForm" method="POST" action="{{ url_for('quick_log_study') }}">
+                    <input type="hidden" name="test_type" value="{{ test_type }}">
+                    <input type="hidden" name="task_name" id="modal_task_name">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Task:</label>
+                        <div id="modal_task_display" class="form-control-plaintext"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modal_subject" class="form-label">Subject:</label>
+                        <select class="form-select" name="subject" id="modal_subject" required>
+                            <option value="">Select subject...</option>
+                            {% if test_type == 'TOEFL' %}
+                                <option value="Reading">Reading</option>
+                                <option value="Listening">Listening</option>
+                                <option value="Speaking">Speaking</option>
+                                <option value="Writing">Writing</option>
+                                <option value="Grammar">Grammar</option>
+                                <option value="Vocabulary">Vocabulary</option>
+                            {% elif test_type == 'GRE' %}
+                                <option value="Verbal Reasoning">Verbal Reasoning</option>
+                                <option value="Quantitative Reasoning">Quantitative Reasoning</option>
+                                <option value="Analytical Writing">Analytical Writing</option>
+                                <option value="Vocabulary">Vocabulary</option>
+                                <option value="Math Review">Math Review</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modal_duration" class="form-label">Duration (minutes):</label>
+                        <input type="number" class="form-control" name="duration_minutes" id="modal_duration" 
+                               min="1" max="480" required>
+                        <div class="form-text">Suggested: <span id="suggested_duration"></span></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="quickLogForm" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Log Study Session
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showQuickLogModal(taskName, timeRequired) {
+    document.getElementById('modal_task_name').value = taskName;
+    document.getElementById('modal_task_display').textContent = taskName;
+    document.getElementById('suggested_duration').textContent = timeRequired;
+    
+    // Parse time requirement and suggest duration
+    const timeMatch = timeRequired.match(/(\d+)/);
+    if (timeMatch) {
+        const minutes = parseInt(timeMatch[1]) * 60; // Convert hours to minutes
+        document.getElementById('modal_duration').value = minutes;
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('quickLogModal'));
+    modal.show();
+}
+</script>
 {% endblock %}

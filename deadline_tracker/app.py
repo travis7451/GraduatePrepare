@@ -185,10 +185,12 @@ def study_plan_detail(test_type):
     progress = StudyProgress.query.filter_by(test_type=test_type.upper()).all()
     progress_dict = {f"{p.phase_number}_{p.task_index}": p for p in progress}
     
+    from datetime import date
     return render_template('study_plan_detail.html', 
                          plan=plan, 
                          test_type=test_type.upper(),
-                         progress=progress_dict)
+                         progress=progress_dict,
+                         today=date.today())
 
 @app.route('/add-study-session', methods=['GET', 'POST'])
 def add_study_session():
@@ -210,6 +212,29 @@ def add_study_session():
     from datetime import date
     return render_template('add_study_session.html', today=date.today())
 
+
+@app.route('/quick-log-study', methods=['POST'])
+def quick_log_study():
+    """Quick log study session from study plan"""
+    test_type = request.form['test_type']
+    task_name = request.form['task_name']
+    duration_minutes = int(request.form['duration_minutes'])
+    subject = request.form.get('subject', 'General')
+    
+    # Create study session
+    session = StudySession(
+        test_type=test_type,
+        subject=subject,
+        task_name=task_name,
+        duration_minutes=duration_minutes,
+        notes=f'Quick log from {test_type} study plan',
+        date_studied=datetime.now().date()
+    )
+    db.session.add(session)
+    db.session.commit()
+    
+    flash(f'Study session logged: {session.duration_hours()} hours on {task_name}!', 'success')
+    return redirect(url_for('study_plan_detail', test_type=test_type.lower()))
 
 @app.route('/mark-task-complete', methods=['POST'])
 def mark_task_complete():
@@ -274,6 +299,14 @@ def dashboard():
             StudySession.date_studied >= thirty_days_ago
         ).group_by(StudySession.date_studied).all()
         
+        # Create calendar data for last 30 days
+        calendar_data = {}
+        for study_day in daily_study:
+            calendar_data[study_day.date_studied.strftime('%Y-%m-%d')] = {
+                'minutes': study_day.total_minutes,
+                'hours': round(study_day.total_minutes / 60, 1)
+            }
+        
         # Get study time by test type
         study_by_test = db.session.query(
             StudySession.test_type,
@@ -301,6 +334,7 @@ def dashboard():
         print(f"Study data not available: {e}")
         recent_sessions = []
         daily_study = []
+        calendar_data = {}
         study_by_test = []
         study_by_subject = []
         total_hours = 0
@@ -313,6 +347,7 @@ def dashboard():
                          urgent_deadlines=urgent_deadlines,
                          recent_sessions=recent_sessions,
                          daily_study=daily_study,
+                         calendar_data=calendar_data,
                          study_by_test=study_by_test,
                          study_by_subject=study_by_subject,
                          total_hours=total_hours,
