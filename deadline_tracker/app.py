@@ -59,8 +59,69 @@ class StudyProgress(db.Model):
 
 @app.route('/')
 def index():
-    deadlines = Deadline.query.order_by(Deadline.deadline_date.asc()).all()
-    return render_template('index.html', deadlines=deadlines)
+    from datetime import date, timedelta
+    from sqlalchemy import func
+    
+    # Get upcoming deadlines (next 30 days)
+    today = date.today()
+    thirty_days_later = today + timedelta(days=30)
+    
+    upcoming_deadlines = Deadline.query.filter(
+        Deadline.deadline_date.between(today, thirty_days_later)
+    ).order_by(Deadline.deadline_date.asc()).limit(5).all()
+    
+    # Get urgent deadlines (next 7 days)
+    urgent_deadlines = Deadline.query.filter(
+        Deadline.deadline_date.between(today, today + timedelta(days=7)),
+        Deadline.status != 'completed'
+    ).order_by(Deadline.deadline_date.asc()).all()
+    
+    # Get recent study sessions
+    try:
+        recent_sessions = StudySession.query.order_by(StudySession.date_studied.desc()).limit(3).all()
+        
+        # Get today's study progress
+        today_sessions = StudySession.query.filter_by(date_studied=today).all()
+        today_hours = sum(s.duration_minutes for s in today_sessions) / 60
+        
+        # Calculate overall study stats
+        total_study_hours = db.session.query(func.sum(StudySession.duration_minutes)).scalar() or 0
+        total_study_hours = round(total_study_hours / 60, 1)
+        
+        # Get study progress for this week
+        week_start = today - timedelta(days=today.weekday())
+        week_sessions = StudySession.query.filter(
+            StudySession.date_studied >= week_start
+        ).all()
+        week_hours = sum(s.duration_minutes for s in week_sessions) / 60
+        
+    except Exception as e:
+        recent_sessions = []
+        today_hours = 0
+        total_study_hours = 0
+        week_hours = 0
+    
+    # Calculate days until major milestones
+    milestones = [
+        {"name": "TOEFL Exam Target", "date": date(2026, 1, 31)},
+        {"name": "GRE Exam Target", "date": date(2026, 4, 30)},
+        {"name": "Application Deadline", "date": date(2026, 12, 15)},
+        {"name": "Target Enrollment", "date": date(2027, 8, 31)}
+    ]
+    
+    for milestone in milestones:
+        days_until = (milestone["date"] - today).days
+        milestone["days_until"] = days_until
+        milestone["urgent"] = days_until <= 30
+    
+    return render_template('index.html', 
+                         upcoming_deadlines=upcoming_deadlines,
+                         urgent_deadlines=urgent_deadlines,
+                         recent_sessions=recent_sessions,
+                         today_hours=round(today_hours, 1),
+                         total_study_hours=total_study_hours,
+                         week_hours=round(week_hours, 1),
+                         milestones=milestones)
 
 @app.route('/add', methods=['GET', 'POST'])
 def add_deadline():
