@@ -160,8 +160,28 @@ def dashboard():
                          overdue_deadlines=overdue_deadlines,
                          urgent_deadlines=urgent_deadlines)
 
-if __name__ == '__main__':
+def initialize_database():
+    """Initialize database with data if empty"""
     with app.app_context():
         db.create_all()
+        
+        # Check if database is empty
+        if Deadline.query.count() == 0:
+            try:
+                # Try to import from backup first
+                from import_database import import_database
+                count = import_database()
+                print(f"Auto-populated database with {count} deadlines from backup!")
+            except Exception as e:
+                try:
+                    # Fall back to populate_deadlines
+                    from populate_deadlines import populate_deadlines
+                    populate_deadlines()
+                    print("Auto-populated database with 25 deadlines!")
+                except Exception as e2:
+                    print(f"Failed to auto-populate database: {e}, {e2}")
+
+if __name__ == '__main__':
+    initialize_database()
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
