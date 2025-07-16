@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 import os
+from study_plans import STUDY_PLANS, get_study_plan, get_all_test_types
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
@@ -138,6 +139,22 @@ def check_database():
         return debug_info
     except Exception as e:
         return f"<h2>Database Error</h2><p>{str(e)}</p><p><a href='/'>← Back to Home</a></p>"
+
+@app.route('/study-plans')
+def study_plans():
+    """Display available study plans"""
+    test_types = get_all_test_types()
+    return render_template('study_plans.html', test_types=test_types, plans=STUDY_PLANS)
+
+@app.route('/study-plan/<test_type>')
+def study_plan_detail(test_type):
+    """Display detailed study plan for specific test"""
+    plan = get_study_plan(test_type)
+    if not plan:
+        flash(f'Study plan for {test_type} not found', 'error')
+        return redirect(url_for('study_plans'))
+    
+    return render_template('study_plan_detail.html', plan=plan, test_type=test_type.upper())
 
 @app.route('/dashboard')
 def dashboard():
