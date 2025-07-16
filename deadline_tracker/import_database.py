@@ -5,9 +5,8 @@ from datetime import datetime
 def import_database():
     """Import database from JSON backup file"""
     with app.app_context():
-        # Clear existing data
-        Deadline.query.delete()
-        db.session.commit()
+        # Ensure tables exist
+        db.create_all()
         
         # Load from JSON file
         with open('deadlines_backup.json', 'r') as f:

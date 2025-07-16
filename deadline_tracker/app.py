@@ -89,19 +89,55 @@ def delete_deadline(id):
 def setup_database():
     """Populate database with initial deadlines"""
     try:
+        # Clear existing data first
+        Deadline.query.delete()
+        db.session.commit()
+        
         # Try to import from backup first
         try:
             from import_database import import_database
             count = import_database()
             flash(f'Database restored successfully with {count} deadlines from backup!', 'success')
-        except:
+        except Exception as backup_error:
             # Fall back to populate_deadlines if backup fails
-            from populate_deadlines import populate_deadlines
-            populate_deadlines()
-            flash('Database populated successfully with 25 deadlines!', 'success')
+            try:
+                from populate_deadlines import populate_deadlines
+                populate_deadlines()
+                flash('Database populated successfully with 25 deadlines!', 'success')
+            except Exception as populate_error:
+                flash(f'Backup error: {str(backup_error)}. Populate error: {str(populate_error)}', 'error')
+                return redirect(url_for('index'))
     except Exception as e:
         flash(f'Error setting up database: {str(e)}', 'error')
     return redirect(url_for('index'))
+
+@app.route('/check-database')
+def check_database():
+    """Debug route to check database status"""
+    try:
+        total_deadlines = Deadline.query.count()
+        deadlines = Deadline.query.all()
+        
+        debug_info = f"""
+        <h2>Database Status</h2>
+        <p><strong>Total deadlines:</strong> {total_deadlines}</p>
+        <p><strong>Database tables exist:</strong> {db.engine.has_table('deadline')}</p>
+        <h3>First 5 deadlines:</h3>
+        <ul>
+        """
+        
+        for deadline in deadlines[:5]:
+            debug_info += f"<li>{deadline.title} - {deadline.university} - {deadline.deadline_date}</li>"
+        
+        debug_info += """
+        </ul>
+        <p><a href="/">← Back to Home</a></p>
+        <p><a href="/setup-database">Setup Database</a></p>
+        """
+        
+        return debug_info
+    except Exception as e:
+        return f"<h2>Database Error</h2><p>{str(e)}</p><p><a href='/'>← Back to Home</a></p>"
 
 @app.route('/dashboard')
 def dashboard():
