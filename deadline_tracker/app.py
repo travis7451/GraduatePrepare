@@ -88,12 +88,19 @@ def delete_deadline(id):
 @app.route('/setup-database')
 def setup_database():
     """Populate database with initial deadlines"""
-    from populate_deadlines import populate_deadlines
     try:
-        populate_deadlines()
-        flash('Database populated successfully with 25 deadlines!', 'success')
+        # Try to import from backup first
+        try:
+            from import_database import import_database
+            count = import_database()
+            flash(f'Database restored successfully with {count} deadlines from backup!', 'success')
+        except:
+            # Fall back to populate_deadlines if backup fails
+            from populate_deadlines import populate_deadlines
+            populate_deadlines()
+            flash('Database populated successfully with 25 deadlines!', 'success')
     except Exception as e:
-        flash(f'Error populating database: {str(e)}', 'error')
+        flash(f'Error setting up database: {str(e)}', 'error')
     return redirect(url_for('index'))
 
 @app.route('/dashboard')
