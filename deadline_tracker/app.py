@@ -143,29 +143,81 @@ def setup_database():
 def check_database():
     """Debug route to check database status"""
     try:
-        total_deadlines = Deadline.query.count()
-        deadlines = Deadline.query.all()
+        from sqlalchemy import inspect, text
+        
+        # Check database connection and type
+        inspector = inspect(db.engine)
+        tables = inspector.get_table_names()
+        
+        # Get database URL info
+        db_url = str(db.engine.url)
+        db_type = db.engine.dialect.name
         
         debug_info = f"""
+        <div style="max-width: 800px; margin: 20px auto; padding: 20px; font-family: Arial;">
         <h2>Database Status</h2>
-        <p><strong>Total deadlines:</strong> {total_deadlines}</p>
-        <p><strong>Database tables exist:</strong> {db.engine.has_table('deadline')}</p>
-        <h3>First 5 deadlines:</h3>
+        <p><strong>Database Type:</strong> {db_type}</p>
+        <p><strong>Database URL:</strong> {db_url}</p>
+        <p><strong>Tables found:</strong> {len(tables)}</p>
         <ul>
         """
         
-        for deadline in deadlines[:5]:
-            debug_info += f"<li>{deadline.title} - {deadline.university} - {deadline.deadline_date}</li>"
+        for table in tables:
+            debug_info += f"<li>{table}</li>"
+        
+        debug_info += "</ul>"
+        
+        # Check if our specific tables exist
+        expected_tables = ['deadline', 'study_session', 'study_progress']
+        for table in expected_tables:
+            exists = table in tables
+            status = "✅ EXISTS" if exists else "❌ MISSING"
+            debug_info += f"<p><strong>{table}:</strong> {status}</p>"
+        
+        # Try to count records if tables exist
+        if 'deadline' in tables:
+            total_deadlines = Deadline.query.count()
+            debug_info += f"<p><strong>Total deadlines:</strong> {total_deadlines}</p>"
+        
+        if 'study_session' in tables:
+            total_sessions = StudySession.query.count()
+            debug_info += f"<p><strong>Total study sessions:</strong> {total_sessions}</p>"
         
         debug_info += """
-        </ul>
-        <p><a href="/">← Back to Home</a></p>
-        <p><a href="/setup-database">Setup Database</a></p>
+        <hr>
+        <p><a href="/" style="margin-right: 10px;">← Back to Home</a></p>
+        <p><a href="/setup-database" style="margin-right: 10px;">Setup Database</a></p>
+        <p><a href="/force-create-tables" style="margin-right: 10px;">Force Create Tables</a></p>
+        </div>
         """
         
         return debug_info
     except Exception as e:
-        return f"<h2>Database Error</h2><p>{str(e)}</p><p><a href='/'>← Back to Home</a></p>"
+        return f"""
+        <div style="max-width: 800px; margin: 20px auto; padding: 20px; font-family: Arial;">
+        <h2>Database Connection Error</h2>
+        <p><strong>Error:</strong> {str(e)}</p>
+        <p>This suggests the database connection is not working properly.</p>
+        <p><a href="/">← Back to Home</a></p>
+        <p><a href="/force-create-tables">Try Force Create Tables</a></p>
+        </div>
+        """
+
+@app.route('/force-create-tables')
+def force_create_tables():
+    """Force create all database tables"""
+    try:
+        # Drop all tables first (be careful!)
+        db.drop_all()
+        
+        # Create all tables
+        db.create_all()
+        
+        flash('All database tables created successfully!', 'success')
+        return redirect(url_for('check_database'))
+    except Exception as e:
+        flash(f'Error creating tables: {str(e)}', 'error')
+        return redirect(url_for('check_database'))
 
 @app.route('/study-plans')
 def study_plans():
