@@ -113,6 +113,10 @@ def delete_deadline(id):
 def setup_database():
     """Populate database with initial deadlines"""
     try:
+        # Ensure all tables exist
+        db.create_all()
+        flash('Database tables created successfully!', 'success')
+        
         # Clear existing data first
         Deadline.query.delete()
         db.session.commit()
@@ -256,39 +260,50 @@ def dashboard():
         Deadline.status != 'completed'
     ).all()
     
-    # Study statistics
-    recent_sessions = StudySession.query.order_by(StudySession.date_studied.desc()).limit(5).all()
-    
-    # Get daily study time for last 30 days
-    thirty_days_ago = date.today() - timedelta(days=30)
-    daily_study = db.session.query(
-        StudySession.date_studied,
-        func.sum(StudySession.duration_minutes).label('total_minutes')
-    ).filter(
-        StudySession.date_studied >= thirty_days_ago
-    ).group_by(StudySession.date_studied).all()
-    
-    # Get study time by test type
-    study_by_test = db.session.query(
-        StudySession.test_type,
-        func.sum(StudySession.duration_minutes).label('total_minutes')
-    ).group_by(StudySession.test_type).all()
-    
-    # Get study time by subject
-    study_by_subject = db.session.query(
-        StudySession.subject,
-        func.sum(StudySession.duration_minutes).label('total_minutes')
-    ).group_by(StudySession.subject).all()
-    
-    # Calculate totals
-    total_minutes = sum(s.total_minutes or 0 for s in study_by_test)
-    total_hours = round(total_minutes / 60, 1)
-    
-    # Get today's study time
-    today = date.today()
-    today_sessions = StudySession.query.filter_by(date_studied=today).all()
-    today_minutes = sum(s.duration_minutes for s in today_sessions)
-    today_hours = round(today_minutes / 60, 1)
+    # Study statistics - with error handling
+    try:
+        recent_sessions = StudySession.query.order_by(StudySession.date_studied.desc()).limit(5).all()
+        
+        # Get daily study time for last 30 days
+        thirty_days_ago = date.today() - timedelta(days=30)
+        daily_study = db.session.query(
+            StudySession.date_studied,
+            func.sum(StudySession.duration_minutes).label('total_minutes')
+        ).filter(
+            StudySession.date_studied >= thirty_days_ago
+        ).group_by(StudySession.date_studied).all()
+        
+        # Get study time by test type
+        study_by_test = db.session.query(
+            StudySession.test_type,
+            func.sum(StudySession.duration_minutes).label('total_minutes')
+        ).group_by(StudySession.test_type).all()
+        
+        # Get study time by subject
+        study_by_subject = db.session.query(
+            StudySession.subject,
+            func.sum(StudySession.duration_minutes).label('total_minutes')
+        ).group_by(StudySession.subject).all()
+        
+        # Calculate totals
+        total_minutes = sum(s.total_minutes or 0 for s in study_by_test)
+        total_hours = round(total_minutes / 60, 1)
+        
+        # Get today's study time
+        today = date.today()
+        today_sessions = StudySession.query.filter_by(date_studied=today).all()
+        today_minutes = sum(s.duration_minutes for s in today_sessions)
+        today_hours = round(today_minutes / 60, 1)
+        
+    except Exception as e:
+        # If study tables don't exist yet, use default values
+        print(f"Study data not available: {e}")
+        recent_sessions = []
+        daily_study = []
+        study_by_test = []
+        study_by_subject = []
+        total_hours = 0
+        today_hours = 0
     
     return render_template('dashboard.html', 
                          total_deadlines=total_deadlines,
@@ -305,23 +320,30 @@ def dashboard():
 def initialize_database():
     """Initialize database with data if empty"""
     with app.app_context():
-        db.create_all()
-        
-        # Check if database is empty
-        if Deadline.query.count() == 0:
-            try:
-                # Try to import from backup first
-                from import_database import import_database
-                count = import_database()
-                print(f"Auto-populated database with {count} deadlines from backup!")
-            except Exception as e:
+        try:
+            # Create all tables including new ones
+            db.create_all()
+            print("Database tables created successfully")
+            
+            # Check if database is empty
+            if Deadline.query.count() == 0:
                 try:
-                    # Fall back to populate_deadlines
-                    from populate_deadlines import populate_deadlines
-                    populate_deadlines()
-                    print("Auto-populated database with 25 deadlines!")
-                except Exception as e2:
-                    print(f"Failed to auto-populate database: {e}, {e2}")
+                    # Try to import from backup first
+                    from import_database import import_database
+                    count = import_database()
+                    print(f"Auto-populated database with {count} deadlines from backup!")
+                except Exception as e:
+                    try:
+                        # Fall back to populate_deadlines
+                        from populate_deadlines import populate_deadlines
+                        populate_deadlines()
+                        print("Auto-populated database with 25 deadlines!")
+                    except Exception as e2:
+                        print(f"Failed to auto-populate database: {e}, {e2}")
+        except Exception as e:
+            print(f"Error initializing database: {e}")
+            # Try to continue anyway
+            pass
 
 if __name__ == '__main__':
     initialize_database()

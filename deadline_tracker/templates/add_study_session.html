@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Add Study Session - Deadline Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-clock"></i> Log Study Session</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="test_type" class="form-label">Test Type</label>
+                                <select class="form-select" id="test_type" name="test_type" required>
+                                    <option value="">Select test...</option>
+                                    <option value="TOEFL">TOEFL</option>
+                                    <option value="GRE">GRE</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="subject" class="form-label">Subject/Section</label>
+                                <input type="text" class="form-control" id="subject" name="subject" required
+                                       placeholder="e.g., Reading, Writing, Math, Vocabulary">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="task_name" class="form-label">Task/Activity</label>
+                        <input type="text" class="form-control" id="task_name" name="task_name" 
+                               placeholder="e.g., Practice reading passages, Vocabulary flashcards, Writing essay" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="duration_minutes" class="form-label">Study Duration (minutes)</label>
+                                <input type="number" class="form-control" id="duration_minutes" name="duration_minutes" 
+                                       min="1" max="480" required>
+                                <div class="form-text">Enter study time in minutes (e.g., 90 for 1.5 hours)</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="date_studied" class="form-label">Study Date</label>
+                                <input type="date" class="form-control" id="date_studied" name="date_studied" 
+                                       value="{{ date.today().strftime('%Y-%m-%d') }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                  placeholder="How did it go? What did you learn? Any challenges?"></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Log Study Session
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
