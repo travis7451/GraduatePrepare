@@ -85,6 +85,17 @@ def delete_deadline(id):
     flash('Deadline deleted successfully!', 'success')
     return redirect(url_for('index'))
 
+@app.route('/setup-database')
+def setup_database():
+    """Populate database with initial deadlines"""
+    from populate_deadlines import populate_deadlines
+    try:
+        populate_deadlines()
+        flash('Database populated successfully with 25 deadlines!', 'success')
+    except Exception as e:
+        flash(f'Error populating database: {str(e)}', 'error')
+    return redirect(url_for('index'))
+
 @app.route('/dashboard')
 def dashboard():
     total_deadlines = Deadline.query.count()

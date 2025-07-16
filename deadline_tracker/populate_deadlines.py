@@ -1,7 +1,7 @@
-from app import app, db, Deadline
 from datetime import datetime, date
 
 def populate_deadlines():
+    from app import app, db, Deadline
     """
     Populate the database with deadlines from the README.md timeline
     """
