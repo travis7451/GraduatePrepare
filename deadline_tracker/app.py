@@ -158,7 +158,7 @@ def edit_deadline(id):
         
         db.session.commit()
         flash('Deadline updated successfully!', 'success')
-        return redirect(url_for('index'))
+        return redirect(url_for('deadlines'))
     
     return render_template('edit_deadline.html', deadline=deadline)
 
@@ -168,7 +168,32 @@ def delete_deadline(id):
     db.session.delete(deadline)
     db.session.commit()
     flash('Deadline deleted successfully!', 'success')
-    return redirect(url_for('index'))
+    return redirect(url_for('deadlines'))
+
+@app.route('/deadlines')
+def deadlines():
+    """Show all deadlines with filtering and sorting options"""
+    from datetime import date
+    
+    # Get all deadlines ordered by deadline date
+    all_deadlines = Deadline.query.order_by(Deadline.deadline_date.asc()).all()
+    
+    # Count overdue deadlines
+    today = date.today()
+    overdue_count = sum(1 for deadline in all_deadlines if deadline.deadline_date < today and deadline.status != 'completed')
+    
+    return render_template('deadlines.html', 
+                         deadlines=all_deadlines,
+                         overdue_count=overdue_count)
+
+@app.route('/mark-completed/<int:id>', methods=['POST'])
+def mark_completed(id):
+    """Mark a deadline as completed"""
+    deadline = Deadline.query.get_or_404(id)
+    deadline.status = 'completed'
+    db.session.commit()
+    flash(f'Deadline "{deadline.title}" marked as completed!', 'success')
+    return redirect(url_for('deadlines'))
 
 @app.route('/setup-database')
 def setup_database():

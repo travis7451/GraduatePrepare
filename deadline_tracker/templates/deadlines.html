@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block title %}All Deadlines - Deadline Tracker{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-calendar-alt"></i> All Deadlines</h1>
+            <a href="{{ url_for('add_deadline') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New Deadline
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Filter and Sort Controls -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h6>Filter by Status:</h6>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-secondary filter-btn active" data-filter="all">All</button>
+                    <button type="button" class="btn btn-outline-warning filter-btn" data-filter="pending">Pending</button>
+                    <button type="button" class="btn btn-outline-info filter-btn" data-filter="in_progress">In Progress</button>
+                    <button type="button" class="btn btn-outline-success filter-btn" data-filter="completed">Completed</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h6>Sort by:</h6>
+                <select class="form-select" id="sortSelect">
+                    <option value="deadline_date">Deadline Date</option>
+                    <option value="priority">Priority</option>
+                    <option value="university">University</option>
+                    <option value="category">Category</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-list fa-2x text-primary mb-2"></i>
+                <h5 class="card-title">Total</h5>
+                <h2 class="text-primary">{{ deadlines|length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                <h5 class="card-title">Pending</h5>
+                <h2 class="text-warning">{{ deadlines|selectattr('status', 'equalto', 'pending')|list|length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
+                <h5 class="card-title">Overdue</h5>
+                <h2 class="text-danger">{{ overdue_count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                <h5 class="card-title">Completed</h5>
+                <h2 class="text-success">{{ deadlines|selectattr('status', 'equalto', 'completed')|list|length }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Deadlines Table -->
+<div class="card">
+    <div class="card-header">
+        <h5><i class="fas fa-table"></i> Deadlines Overview</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="deadlinesTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Title</th>
+                        <th>University</th>
+                        <th>Program</th>
+                        <th>Category</th>
+                        <th>Deadline</th>
+                        <th>Days Left</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for deadline in deadlines %}
+                    <tr class="deadline-row" data-status="{{ deadline.status }}" data-priority="{{ deadline.priority }}" data-category="{{ deadline.category }}">
+                        <td>
+                            <strong>{{ deadline.title }}</strong>
+                            {% if deadline.notes %}
+                            <br><small class="text-muted">{{ deadline.notes[:50] }}{% if deadline.notes|length > 50 %}...{% endif %}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ deadline.university }}</td>
+                        <td>{{ deadline.program }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if deadline.category == 'application' %}bg-primary
+                                {% elif deadline.category == 'test' %}bg-info
+                                {% elif deadline.category == 'document' %}bg-secondary
+                                {% else %}bg-dark
+                                {% endif %}">
+                                {{ deadline.category.title() }}
+                            </span>
+                        </td>
+                        <td>
+                            {{ deadline.deadline_date.strftime('%B %d, %Y') }}
+                            <br><small class="text-muted">{{ deadline.deadline_date.strftime('%A') }}</small>
+                        </td>
+                        <td>
+                            {% set days_left = deadline.days_until_deadline() %}
+                            <span class="badge 
+                                {% if days_left < 0 %}bg-danger
+                                {% elif days_left <= 1 %}bg-danger
+                                {% elif days_left <= 7 %}bg-warning
+                                {% elif days_left <= 30 %}bg-info
+                                {% else %}bg-success
+                                {% endif %}">
+                                {% if days_left < 0 %}
+                                    {{ days_left * -1 }} days overdue
+                                {% elif days_left == 0 %}
+                                    Today!
+                                {% elif days_left == 1 %}
+                                    Tomorrow
+                                {% else %}
+                                    {{ days_left }} days
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge 
+                                {% if deadline.priority == 'high' %}bg-danger
+                                {% elif deadline.priority == 'medium' %}bg-warning
+                                {% else %}bg-secondary
+                                {% endif %}">
+                                {{ deadline.priority.title() }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge 
+                                {% if deadline.status == 'completed' %}bg-success
+                                {% elif deadline.status == 'in_progress' %}bg-info
+                                {% else %}bg-secondary
+                                {% endif %}">
+                                {{ deadline.status.replace('_', ' ').title() }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('edit_deadline', id=deadline.id) }}" 
+                                   class="btn btn-sm btn-outline-primary" 
+                                   title="Edit deadline">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger" 
+                                        onclick="confirmDelete({{ deadline.id }}, '{{ deadline.title }}')"
+                                        title="Delete deadline">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% if deadline.status != 'completed' %}
+                                <button class="btn btn-sm btn-outline-success" 
+                                        onclick="markCompleted({{ deadline.id }})"
+                                        title="Mark as completed">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if not deadlines %}
+        <div class="text-center py-5">
+            <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">No deadlines found</h4>
+            <p class="text-muted">Start by adding your first deadline!</p>
+            <a href="{{ url_for('add_deadline') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Deadline
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.filter-btn.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.deadline-row {
+    transition: all 0.3s ease;
+}
+
+.deadline-row:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.table-responsive {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.btn-group .btn {
+    margin-right: 2px;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .badge {
+        font-size: 0.7em;
+    }
+}
+</style>
+
+<script>
+// Filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const rows = document.querySelectorAll('.deadline-row');
+    const sortSelect = document.getElementById('sortSelect');
+    
+    // Filter by status
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Update active button
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            
+            rows.forEach(row => {
+                if (filter === 'all' || row.dataset.status === filter) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+    
+    // Sort functionality
+    sortSelect.addEventListener('change', function() {
+        const sortBy = this.value;
+        const tbody = document.querySelector('#deadlinesTable tbody');
+        const rowsArray = Array.from(rows);
+        
+        rowsArray.sort((a, b) => {
+            let aVal, bVal;
+            
+            switch(sortBy) {
+                case 'deadline_date':
+                    aVal = new Date(a.cells[4].textContent);
+                    bVal = new Date(b.cells[4].textContent);
+                    break;
+                case 'priority':
+                    const priorityOrder = {'high': 3, 'medium': 2, 'low': 1};
+                    aVal = priorityOrder[a.dataset.priority];
+                    bVal = priorityOrder[b.dataset.priority];
+                    return bVal - aVal; // Reverse for priority
+                case 'university':
+                    aVal = a.cells[1].textContent;
+                    bVal = b.cells[1].textContent;
+                    break;
+                case 'category':
+                    aVal = a.dataset.category;
+                    bVal = b.dataset.category;
+                    break;
+                default:
+                    return 0;
+            }
+            
+            if (aVal < bVal) return -1;
+            if (aVal > bVal) return 1;
+            return 0;
+        });
+        
+        rowsArray.forEach(row => tbody.appendChild(row));
+    });
+});
+
+function confirmDelete(id, title) {
+    if (confirm(`Are you sure you want to delete the deadline "${title}"?\n\nThis action cannot be undone.`)) {
+        window.location.href = `/delete/${id}`;
+    }
+}
+
+function markCompleted(id) {
+    if (confirm('Mark this deadline as completed?')) {
+        // Create a form to submit the status change
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/mark-completed/${id}`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}
