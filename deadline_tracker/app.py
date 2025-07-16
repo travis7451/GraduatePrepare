@@ -34,6 +34,29 @@ class Deadline(db.Model):
     def is_urgent(self):
         return 0 <= self.days_until_deadline() <= 7
 
+class StudySession(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    test_type = db.Column(db.String(20), nullable=False)  # TOEFL, GRE
+    subject = db.Column(db.String(100), nullable=False)  # Reading, Math, Vocabulary, etc.
+    task_name = db.Column(db.String(200), nullable=False)  # Specific task studied
+    duration_minutes = db.Column(db.Integer, nullable=False)  # Study time in minutes
+    notes = db.Column(db.Text)  # Study notes or observations
+    date_studied = db.Column(db.Date, nullable=False, default=datetime.now().date())
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def duration_hours(self):
+        return round(self.duration_minutes / 60, 2)
+
+class StudyProgress(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    test_type = db.Column(db.String(20), nullable=False)  # TOEFL, GRE
+    phase_number = db.Column(db.Integer, nullable=False)  # 0, 1, 2, 3
+    task_index = db.Column(db.Integer, nullable=False)  # Task index within phase
+    completed = db.Column(db.Boolean, default=False)
+    completion_date = db.Column(db.Date)
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 @app.route('/')
 def index():
     deadlines = Deadline.query.order_by(Deadline.deadline_date.asc()).all()
@@ -154,10 +177,72 @@ def study_plan_detail(test_type):
         flash(f'Study plan for {test_type} not found', 'error')
         return redirect(url_for('study_plans'))
     
-    return render_template('study_plan_detail.html', plan=plan, test_type=test_type.upper())
+    # Get study progress for this test
+    progress = StudyProgress.query.filter_by(test_type=test_type.upper()).all()
+    progress_dict = {f"{p.phase_number}_{p.task_index}": p for p in progress}
+    
+    return render_template('study_plan_detail.html', 
+                         plan=plan, 
+                         test_type=test_type.upper(),
+                         progress=progress_dict)
+
+@app.route('/add-study-session', methods=['GET', 'POST'])
+def add_study_session():
+    """Add a new study session"""
+    if request.method == 'POST':
+        session = StudySession(
+            test_type=request.form['test_type'],
+            subject=request.form['subject'],
+            task_name=request.form['task_name'],
+            duration_minutes=int(request.form['duration_minutes']),
+            notes=request.form.get('notes', ''),
+            date_studied=datetime.strptime(request.form['date_studied'], '%Y-%m-%d').date()
+        )
+        db.session.add(session)
+        db.session.commit()
+        flash(f'Study session added: {session.duration_hours()} hours on {session.subject}!', 'success')
+        return redirect(url_for('dashboard'))
+    
+    return render_template('add_study_session.html')
+
+
+@app.route('/mark-task-complete', methods=['POST'])
+def mark_task_complete():
+    """Mark a study plan task as complete"""
+    test_type = request.form['test_type']
+    phase_number = int(request.form['phase_number'])
+    task_index = int(request.form['task_index'])
+    
+    # Check if already exists
+    progress = StudyProgress.query.filter_by(
+        test_type=test_type,
+        phase_number=phase_number,
+        task_index=task_index
+    ).first()
+    
+    if progress:
+        progress.completed = True
+        progress.completion_date = datetime.now().date()
+    else:
+        progress = StudyProgress(
+            test_type=test_type,
+            phase_number=phase_number,
+            task_index=task_index,
+            completed=True,
+            completion_date=datetime.now().date()
+        )
+        db.session.add(progress)
+    
+    db.session.commit()
+    flash('Task marked as complete!', 'success')
+    return redirect(url_for('study_plan_detail', test_type=test_type.lower()))
 
 @app.route('/dashboard')
 def dashboard():
+    from sqlalchemy import func
+    from datetime import date, timedelta
+    
+    # Deadline statistics
     total_deadlines = Deadline.query.count()
     pending_deadlines = Deadline.query.filter_by(status='pending').count()
     overdue_deadlines = Deadline.query.filter(
@@ -171,11 +256,51 @@ def dashboard():
         Deadline.status != 'completed'
     ).all()
     
+    # Study statistics
+    recent_sessions = StudySession.query.order_by(StudySession.date_studied.desc()).limit(5).all()
+    
+    # Get daily study time for last 30 days
+    thirty_days_ago = date.today() - timedelta(days=30)
+    daily_study = db.session.query(
+        StudySession.date_studied,
+        func.sum(StudySession.duration_minutes).label('total_minutes')
+    ).filter(
+        StudySession.date_studied >= thirty_days_ago
+    ).group_by(StudySession.date_studied).all()
+    
+    # Get study time by test type
+    study_by_test = db.session.query(
+        StudySession.test_type,
+        func.sum(StudySession.duration_minutes).label('total_minutes')
+    ).group_by(StudySession.test_type).all()
+    
+    # Get study time by subject
+    study_by_subject = db.session.query(
+        StudySession.subject,
+        func.sum(StudySession.duration_minutes).label('total_minutes')
+    ).group_by(StudySession.subject).all()
+    
+    # Calculate totals
+    total_minutes = sum(s.total_minutes or 0 for s in study_by_test)
+    total_hours = round(total_minutes / 60, 1)
+    
+    # Get today's study time
+    today = date.today()
+    today_sessions = StudySession.query.filter_by(date_studied=today).all()
+    today_minutes = sum(s.duration_minutes for s in today_sessions)
+    today_hours = round(today_minutes / 60, 1)
+    
     return render_template('dashboard.html', 
                          total_deadlines=total_deadlines,
                          pending_deadlines=pending_deadlines,
                          overdue_deadlines=overdue_deadlines,
-                         urgent_deadlines=urgent_deadlines)
+                         urgent_deadlines=urgent_deadlines,
+                         recent_sessions=recent_sessions,
+                         daily_study=daily_study,
+                         study_by_test=study_by_test,
+                         study_by_subject=study_by_subject,
+                         total_hours=total_hours,
+                         today_hours=today_hours)
 
 def initialize_database():
     """Initialize database with data if empty"""

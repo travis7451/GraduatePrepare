@@ -3,7 +3,14 @@
 {% block title %}Dashboard - Deadline Tracker{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Dashboard</h1>
+<h1 class="mb-4"><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+
+<!-- Deadline Statistics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h3><i class="fas fa-calendar-alt"></i> Deadline Overview</h3>
+    </div>
+</div>
 
 <div class="row mb-4">
     <div class="col-md-3">
@@ -39,6 +46,53 @@
                 <i class="fas fa-fire fa-2x text-warning mb-2"></i>
                 <h5 class="card-title">Urgent (Next 7 Days)</h5>
                 <h2 class="text-warning">{{ urgent_deadlines|length }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Study Statistics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h3><i class="fas fa-book"></i> Study Overview</h3>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-clock fa-2x text-success mb-2"></i>
+                <h5 class="card-title">Today's Study</h5>
+                <h2 class="text-success">{{ today_hours }}h</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-chart-line fa-2x text-info mb-2"></i>
+                <h5 class="card-title">Total Study Time</h5>
+                <h2 class="text-info">{{ total_hours }}h</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-graduation-cap fa-2x text-purple mb-2"></i>
+                <h5 class="card-title">Study Sessions</h5>
+                <h2 class="text-purple">{{ recent_sessions|length }}</h2>
+                <small class="text-muted">Recent</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-target fa-2x text-warning mb-2"></i>
+                <h5 class="card-title">Tests Tracked</h5>
+                <h2 class="text-warning">{{ study_by_test|length }}</h2>
             </div>
         </div>
     </div>
@@ -124,12 +178,102 @@
 </div>
 {% endif %}
 
+<!-- Study Analytics -->
+{% if recent_sessions %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-clock"></i> Recent Study Sessions</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Test</th>
+                                <th>Subject</th>
+                                <th>Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for session in recent_sessions %}
+                            <tr>
+                                <td>{{ session.date_studied.strftime('%m/%d') }}</td>
+                                <td>
+                                    <span class="badge bg-primary">{{ session.test_type }}</span>
+                                </td>
+                                <td>{{ session.subject }}</td>
+                                <td>{{ session.duration_hours() }}h</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar"></i> Study Time by Test</h5>
+            </div>
+            <div class="card-body">
+                {% for test_stat in study_by_test %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>{{ test_stat.test_type }}</span>
+                        <span>{{ (test_stat.total_minutes / 60) | round(1) }}h</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: {{ (test_stat.total_minutes / (total_hours * 60) * 100) | round(1) }}%">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-line"></i> Study Time by Subject</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for subject_stat in study_by_subject %}
+                    <div class="col-md-4 mb-3">
+                        <div class="text-center">
+                            <h6>{{ subject_stat.subject }}</h6>
+                            <span class="badge bg-info fs-6">{{ (subject_stat.total_minutes / 60) | round(1) }}h</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="text-center mt-4">
-    <a href="{{ url_for('index') }}" class="btn btn-primary">
+    <a href="{{ url_for('index') }}" class="btn btn-primary me-2">
         <i class="fas fa-list"></i> View All Deadlines
     </a>
-    <a href="{{ url_for('add_deadline') }}" class="btn btn-success">
+    <a href="{{ url_for('add_deadline') }}" class="btn btn-success me-2">
         <i class="fas fa-plus"></i> Add New Deadline
+    </a>
+    <a href="{{ url_for('add_study_session') }}" class="btn btn-info me-2">
+        <i class="fas fa-clock"></i> Log Study Session
+    </a>
+    <a href="{{ url_for('study_plans') }}" class="btn btn-warning">
+        <i class="fas fa-book"></i> View Study Plans
     </a>
 </div>
 {% endblock %}
