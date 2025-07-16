@@ -207,7 +207,8 @@ def add_study_session():
         flash(f'Study session added: {session.duration_hours()} hours on {session.subject}!', 'success')
         return redirect(url_for('dashboard'))
     
-    return render_template('add_study_session.html')
+    from datetime import date
+    return render_template('add_study_session.html', today=date.today())
 
 
 @app.route('/mark-task-complete', methods=['POST'])
