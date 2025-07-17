@@ -567,7 +567,9 @@ function generateSimpleCalendar() {
         dayDiv.className = 'calendar-day';
         
         const currentDate = new Date(currentYear, currentMonth, day);
-        const dateStr = currentDate.toISOString().split('T')[0];
+        const dateStr = currentYear + '-' + 
+                       String(currentMonth + 1).padStart(2, '0') + '-' + 
+                       String(day).padStart(2, '0');
         
         // Create day number element
         const dayNumber = document.createElement('div');
