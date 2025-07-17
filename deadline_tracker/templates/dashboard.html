@@ -390,7 +390,7 @@
     box-sizing: border-box;
 }
 
-.calendar-header div {
+.calendar-header-day {
     padding: 6px 0;
     font-size: 10px;
     text-transform: uppercase;
@@ -398,6 +398,13 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #495057;
+    border-radius: 2px;
+    margin: 1px;
+    min-height: 25px;
 }
 
 .calendar-legend {
@@ -437,9 +444,10 @@
         padding: 3px 6px;
     }
     
-    .calendar-header div {
+    .calendar-header-day {
         font-size: 9px;
         padding: 4px 0;
+        min-height: 20px;
     }
     
     .calendar-day {
@@ -481,9 +489,10 @@
         padding: 2px 4px;
     }
     
-    .calendar-header div {
+    .calendar-header-day {
         font-size: 8px;
         padding: 3px 0;
+        min-height: 18px;
     }
     
     .study-hours {
@@ -553,6 +562,7 @@ function generateCalendar(studyData, container) {
         const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         dayNames.forEach(day => {
             const dayHeader = document.createElement('div');
+            dayHeader.className = 'calendar-header-day';
             dayHeader.textContent = day;
             dayHeader.setAttribute('aria-label', `${day} column`);
             headerDiv.appendChild(dayHeader);
