@@ -295,27 +295,30 @@
 .simple-calendar {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
-    padding: 20px;
+    gap: 4px;
+    padding: 15px;
     background-color: #f8f9fa;
     border-radius: 8px;
     max-width: 100%;
+    box-sizing: border-box;
 }
 
 .calendar-day {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     border: 1px solid #dee2e6;
-    border-radius: 8px;
-    font-size: 16px;
+    border-radius: 4px;
+    font-size: 14px;
     font-weight: 500;
     background-color: #ffffff;
     transition: all 0.2s ease;
     cursor: pointer;
-    min-height: 40px;
+    height: 50px;
     width: 100%;
     box-sizing: border-box;
+    position: relative;
 }
 
 .calendar-day:hover {
@@ -342,63 +345,79 @@
 }
 
 .study-indicator {
-    font-size: 10px;
+    font-size: 9px;
     color: #28a745;
     font-weight: bold;
-    margin-top: 2px;
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    background: rgba(255,255,255,0.9);
+    padding: 1px 3px;
+    border-radius: 2px;
 }
 
 .calendar-header {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
-    margin-bottom: 10px;
+    gap: 4px;
+    margin-bottom: 8px;
     font-weight: bold;
     text-align: center;
-    padding: 10px 20px 0;
+    padding: 0 15px;
 }
 
 .calendar-header-day {
-    padding: 8px 0;
-    font-size: 14px;
+    padding: 8px 4px;
+    font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     color: #495057;
     font-weight: 600;
+    text-align: center;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .simple-calendar {
-        gap: 4px;
-        padding: 15px;
+        gap: 3px;
+        padding: 10px;
     }
     
     .calendar-day {
-        font-size: 14px;
-        min-height: 35px;
+        font-size: 12px;
+        height: 40px;
     }
     
     .calendar-header-day {
-        font-size: 12px;
-        padding: 6px 0;
+        font-size: 10px;
+        padding: 6px 2px;
+    }
+    
+    .study-indicator {
+        font-size: 8px;
+        padding: 0px 2px;
     }
 }
 
 @media (max-width: 480px) {
     .simple-calendar {
         gap: 2px;
-        padding: 10px;
+        padding: 8px;
     }
     
     .calendar-day {
-        font-size: 12px;
-        min-height: 30px;
+        font-size: 11px;
+        height: 35px;
     }
     
     .calendar-header-day {
-        font-size: 10px;
-        padding: 4px 0;
+        font-size: 9px;
+        padding: 4px 1px;
+    }
+    
+    .study-indicator {
+        font-size: 7px;
+        padding: 0px 1px;
     }
 }
 </style>
@@ -489,10 +508,12 @@ function generateSimpleCalendar() {
         calendarContainer.appendChild(dayDiv);
     }
     
-    // Fill remaining cells to complete the grid
-    const totalCells = calendarContainer.children.length - 1; // Subtract header
-    const remainingCells = 42 - totalCells; // 6 rows × 7 days = 42 cells
-    for (let i = 0; i < remainingCells; i++) {
+    // Fill remaining cells to complete exactly 6 rows (42 cells total)
+    const currentCells = calendarContainer.children.length - 1; // Subtract header
+    const totalNeeded = 42; // 6 rows × 7 days
+    const remainingCells = totalNeeded - currentCells;
+    
+    for (let i = 0; i < remainingCells && currentCells + i < totalNeeded; i++) {
         const emptyDay = document.createElement('div');
         emptyDay.className = 'calendar-day other-month';
         calendarContainer.appendChild(emptyDay);
