@@ -2,29 +2,47 @@
 
 A Flask web application to help track graduate school application deadlines, test dates, and important milestones.
 
+## 🚀 Live Demo
+**Access the live application at:** [https://travis.up.railway.app/](https://travis.up.railway.app/)
+
+Try the application with features like deadline management, study session tracking, and an interactive calendar!
+
 ## Features
 
-- **Dashboard**: Overview of all deadlines with statistics
-- **Deadline Management**: Add, edit, and delete deadlines
-- **Priority System**: High, medium, and low priority levels
-- **Status Tracking**: Pending, in progress, and completed statuses
-- **Category Organization**: Applications, tests, documents, recommendations, financial aid
-- **Visual Alerts**: Color-coded deadlines based on urgency
-- **Responsive Design**: Works on desktop and mobile devices
+- **📊 Dashboard**: Overview of all deadlines with statistics and study session tracking
+- **📅 Modern Calendar**: Interactive calendar with glassmorphism design, month navigation, and study session indicators
+- **⏰ Deadline Management**: Add, edit, and delete deadlines with detailed tracking
+- **🎯 Priority System**: High, medium, and low priority levels with color coding
+- **📈 Status Tracking**: Pending, in progress, and completed statuses
+- **📚 Study Session Tracking**: Log study sessions with time tracking and subject organization
+- **🎨 Category Organization**: Applications, tests, documents, recommendations, financial aid
+- **🚨 Visual Alerts**: Color-coded deadlines based on urgency and days remaining
+- **📱 Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
+- **🎪 Interactive Modals**: Enhanced user experience with detailed study session information
 
 ## Installation
 
-1. Install Python dependencies:
+### Option 1: Use the Live Version (Recommended)
+Simply visit [https://travis.up.railway.app/](https://travis.up.railway.app/) - no installation required!
+
+### Option 2: Local Development
+1. Clone the repository:
+```bash
+git clone https://github.com/travis7451/GraduatePrepare.git
+cd GraduatePrepare/deadline_tracker
+```
+
+2. Install Python dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-2. Run the application:
+3. Run the application:
 ```bash
 python app.py
 ```
 
-3. Open your browser to `http://localhost:5000`
+4. Open your browser to `http://localhost:5000`
 
 ## Usage
 
@@ -47,9 +65,19 @@ The application uses SQLite database (`deadlines.db`) which is automatically cre
 
 - **Flask** - Python web framework
 - **SQLAlchemy** - Database ORM
-- **Bootstrap 5** - Frontend styling
-- **Font Awesome** - Icons
-- **SQLite** - Database
+- **Bootstrap 5** - Frontend styling with modern glassmorphism effects
+- **Font Awesome** - Icons and visual elements
+- **SQLite** - Database storage
+- **Railway** - Cloud deployment platform
+
+## Deployment
+
+The application is deployed on Railway, a modern cloud platform that provides:
+- ✅ Automatic deployments from GitHub
+- ✅ Built-in database hosting
+- ✅ Custom domain support
+- ✅ SSL certificates
+- ✅ Global CDN
 
 ## Perfect For
 
